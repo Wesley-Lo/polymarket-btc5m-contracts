@@ -1,0 +1,9 @@
+websockets>=14
+httpx>=0.27
+tzdata
+# tests
+pytest
+# offline viewer only
+PySide6
+pyqtgraph
+numpy

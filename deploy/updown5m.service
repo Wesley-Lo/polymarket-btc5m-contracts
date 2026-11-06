@@ -1,0 +1,41 @@
+# /etc/systemd/system/updown5m.service
+# Runs the frozen v3.1 bot (DRY_RUN or LIVE, chosen in /etc/updown5m/updown5m.conf) as the dedicated user `updown5m`.
+# No secrets here or in the env file: the keys come from Google Secret Manager (the VM's service account), in memory only.
+[Unit]
+Description=updown5m (Polymarket 5-min BTC Up/Down, frozen v3.1)
+After=network-online.target chrony.service
+Wants=network-online.target
+# a bot that keeps failing is not restarted for ever: at most 5 starts in 10 minutes
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=updown5m
+Group=updown5m
+WorkingDirectory=/opt/updown5m
+EnvironmentFile=/etc/updown5m/updown5m.conf
+# UPDOWN5M_MODE = DRY_RUN | LIVE;  UPDOWN5M_MINUTES = run time (0 = until stopped);  UPDOWN5M_EXTRA = extra flags (LIVE needs --i-accept-real-money)
+ExecStart=/opt/updown5m/venv/bin/python -u -m updown5m --exec-mode ${UPDOWN5M_MODE} --minutes ${UPDOWN5M_MINUTES} $UPDOWN5M_EXTRA
+# a crash restarts it after 30 s (LIVE: the start-up pre-flight sells anything left over first). A refusal to start (not armed, pre-flight failed,
+# STOP file, geoblock: exit 78) and a normal end (exit 0) are NOT restarted.
+Restart=on-failure
+RestartSec=30
+RestartPreventExitStatus=78
+# SIGTERM = graceful: no new entries, wait for an open position to close and open windows to resolve (up to ~6 min), then summaries are written
+KillSignal=SIGTERM
+TimeoutStopSec=600
+# logs go to journald (journalctl -u updown5m -f); the session files are in /opt/updown5m/updown5m/logs/sessions/
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=updown5m
+# the code is read-only for the bot; it may write only its logs folder
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/updown5m/updown5m/logs
+Environment=PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

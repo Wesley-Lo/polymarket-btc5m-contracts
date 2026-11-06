@@ -1,0 +1,148 @@
+{
+  "window_s": 300,
+  "slug_prefix": "btc-updown-5m-",
+  "fee": {
+    "default_rate": 0.07,
+    "default_exponent": 1.0
+  },
+  "sigma": {
+    "halflife_s": 60,
+    "floor": 2e-05,
+    "cap": 0.0004,
+    "initial": 8e-05,
+    "warmup_s": 60
+  },
+  "entry": {
+    "thresholds_pts": [
+      4,
+      3,
+      2
+    ],
+    "main_threshold_pts": 4,
+    "min_price": 0.1,
+    "max_price": 0.9,
+    "no_entry_first_s": 30,
+    "no_entry_last_s": 10,
+    "size_usd": 10.0,
+    "limit_slippage_pts": 1,
+    "min_fill_fraction": 0.5,
+    "retry_cooldown_ms": 1000,
+    "max_attempts_per_window": 3
+  },
+  "latency": {
+    "initial_median_ms": 110,
+    "initial_p90_ms": 150,
+    "window_n": 30,
+    "min_samples": 5
+  },
+  "maker": {
+    "bid_offset_pts": 3,
+    "cancel_move_bps": 2,
+    "cancel_after_s": 5,
+    "max_fills_per_token_window": 3
+  },
+  "markouts_s": [
+    0.5,
+    1,
+    2,
+    5
+  ],
+  "candidates": {
+    "log_min_edge_pts": 2.0,
+    "log_interval_ms": 1000
+  },
+  "series_interval_ms": 100,
+  "max_binance_gap_s": 2.0,
+  "calibration_taus_s": [
+    240,
+    180,
+    120,
+    60,
+    30
+  ],
+  "calibration_tolerance_s": 5,
+  "feeds": {
+    "preconnect_s": 8,
+    "book_snapshot_every_s": 60,
+    "book_snapshot_after_connect_s": 2,
+    "pm_ping_every_s": 10,
+    "clob_ping_every_s": 10,
+    "clock_offset_every_s": 60,
+    "min_free_disk_gb": 5,
+    "shutdown_resolution_wait_s": 240,
+    "summary_every_s": 3600,
+    "status_every_s": 10,
+    "resolution_poll_every_s": 5,
+    "resolution_give_up_s": 3600
+  },
+  "bootstrap": {
+    "n": 2000,
+    "seed": 12345
+  },
+  "evaluation": {
+    "min_trades": 300
+  },
+  "model": {
+    "version": "v2",
+    "twap_s": 60,
+    "dist": "normal",
+    "t_df": 5.0,
+    "sigma_mult": 1.0,
+    "basis_bps": 0.0,
+    "min_var_s": 1.0,
+    "max_filled_s": 5,
+    "ptb_mode": "proxy",
+    "ptb_basis_halflife_windows": 6,
+    "ptb_basis_min_windows": 3,
+    "use_coinbase": false,
+    "coinbase_basis_halflife_s": 300,
+    "coinbase_stale_s": 5,
+    "s0_window_s": 60,
+    "s0_offset_s": -5,
+    "end_window_s": 60,
+    "end_offset_s": -5
+  },
+  "gap_rule": {
+    "enabled": true,
+    "reconnect_block_s": 3,
+    "require_rest_sync": true
+  },
+  "strategy": {
+    "version": 3,
+    "rev": 1,
+    "move_bps": 1.0,
+    "lookback_ms": 250,
+    "anchor": "mid",
+    "target_mode": "logit",
+    "beta": 1.0,
+    "thresholds_pts": [
+      6,
+      4,
+      3,
+      2
+    ],
+    "main_threshold_pts": 4,
+    "main_exit_s": 2,
+    "no_entry_first_s": 0,
+    "last_margin_s": 2,
+    "cooldown_after_exit_s": 3,
+    "hs_window_s": 60,
+    "hs_min_samples": 5,
+    "inmove_shadow": true,
+    "max_spread_pts": 4.0,
+    "max_book_age_s": 5.0,
+    "flip_s": [
+      2,
+      5,
+      10
+    ],
+    "markouts_s": [
+      0.5,
+      1,
+      2,
+      5,
+      10
+    ],
+    "pm_keep_s": 10.0
+  }
+}

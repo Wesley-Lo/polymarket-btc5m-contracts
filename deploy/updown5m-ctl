@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# updown5m-ctl: the few commands needed to run the bot on the VM.  Install: sudo install -m 755 deploy/updown5m-ctl /usr/local/bin/updown5m-ctl
+#   start | stop | restart | status | logs | stop-file on|off|status | summary | sessions | mode DRY_RUN|LIVE <minutes> | clock | verify
+set -u
+APP=/opt/updown5m
+PKG=$APP/updown5m
+LOGS=$PKG/logs
+ENVF=/etc/updown5m/updown5m.conf
+UNIT=updown5m
+
+latest_session() { ls -1d "$LOGS"/sessions/2* 2>/dev/null | sort | tail -n 1; }
+
+case "${1:-help}" in
+  start)    sudo systemctl start $UNIT && systemctl --no-pager status $UNIT | head -n 5 ;;
+  stop)     echo "stopping (graceful: waits for an open position and open windows, up to ~10 min) ..."; sudo systemctl stop $UNIT; systemctl --no-pager status $UNIT | head -n 5 ;;
+  restart)  sudo systemctl restart $UNIT ;;
+  status)   systemctl --no-pager status $UNIT | head -n 12; echo; cat $ENVF | grep -v '^#'; echo; ls -l $PKG/STOP $LOGS/RULE_STOP 2>&1 | sed 's/^/  /' ;;
+  logs)     journalctl -u $UNIT -f -n 50 -o cat ;;
+  stop-file)
+    case "${2:-status}" in
+      on)     sudo touch $PKG/STOP && echo "STOP file created: no new entries, open positions are exited. (remove it: updown5m-ctl stop-file off)" ;;
+      off)    sudo rm -f $PKG/STOP && echo "STOP file removed" ;;
+      status) if [ -e $PKG/STOP ]; then echo "STOP file EXISTS"; else echo "no STOP file"; fi
+              if [ -e $LOGS/RULE_STOP ]; then echo "RULE_STOP EXISTS (a pilot stop rule fired; read it, then: sudo rm $LOGS/RULE_STOP)"; cat $LOGS/RULE_STOP; else echo "no RULE_STOP file"; fi ;;
+      *) echo "usage: updown5m-ctl stop-file on|off|status"; exit 2 ;;
+    esac ;;
+  summary)
+    d=$(latest_session); [ -z "$d" ] && { echo "no session yet"; exit 1; }
+    echo "session: $d"
+    for f in live_summary.txt dryrun_summary.txt; do [ -f "$d/$f" ] && { echo "--- $f"; cat "$d/$f"; }; done ;;
+  sessions) ls -l "$LOGS"/sessions 2>/dev/null ;;
+  mode)
+    m="${2:-}"; n="${3:-}"
+    case "$m" in DRY_RUN|LIVE) ;; *) echo "usage: updown5m-ctl mode DRY_RUN|LIVE <minutes, 0 = until stopped>"; exit 2 ;; esac
+    case "$n" in ''|*[!0-9.]*) echo "minutes must be a number (0 = until stopped)"; exit 2 ;; esac
+    extra=""; [ "$m" = "LIVE" ] && extra="--i-accept-real-money"
+    printf '# /etc/updown5m/updown5m.conf (no secrets)\nUPDOWN5M_MODE=%s\nUPDOWN5M_MINUTES=%s\nUPDOWN5M_EXTRA=%s\n' "$m" "$n" "$extra" | sudo tee $ENVF >/dev/null
+    echo "set: mode=$m minutes=$n extra='$extra'   (takes effect at the next start)"
+    [ "$m" = "LIVE" ] && echo "LIVE also needs  \"armed\": true  in $PKG/execution/live_config.json and a passing pre-flight." ;;
+  clock)
+    timedatectl | grep -i "synchronized\|NTP\|Time zone"; echo; chronyc tracking 2>&1 | head -n 8; echo; chronyc sources -v 2>&1 | tail -n 6 ;;
+  verify)
+    cd $APP && sha256sum -c --quiet deploy/MANIFEST.txt && echo "MANIFEST: all files match"
+    sudo -u updown5m $APP/venv/bin/python -m updown5m.params | grep "v3.1" ;;
+  *)
+    sed -n '2,3p' "$0"; echo "commands: start stop restart status logs stop-file summary sessions mode clock verify" ;;
+esac

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv*/
+venv/
+
+# Data, logs and recordings (large, may contain account activity)
+updown5m/logs/
+logs/
+results/
+*.jsonl
+*.jsonl.gz
+*.csv
+*.tgz
+*.zip
+prof.out
+
+# Secrets: never commit
+.env
+*.env
+*secret*
+*.pem
+*.key
+keys.json
+credentials*.json
+
+# Runtime control files
+updown5m/STOP
+updown5m/logs/RULE_STOP
